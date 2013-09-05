@@ -14,36 +14,35 @@
 #
 #   # 127.0.0.1 must be the first resolver
 #   resolveconf::nameserver { '127.0.0.1:
-#     priority => '0',
+#     priority => '1',
 #   }
 #
 #   # 10.0.0.2 is an old nameserver that we don't use anymore
 #   resolvconf::nameserver { '10.0.0.2':
 #     ensure => absent,
 #   }
-define resolvconf::nameserver($priority = 'last() + 1', $ensure = 'present') {
-  include resolvconf::lenses
-
+define resolvconf::nameserver ($priority = 'last() + 1', $ensure = 'present') {
   Augeas {
     incl => '/etc/resolv.conf',
-    lens => 'Resolvconf.lns',
-    require => Class['resolvconf::lenses'],
+    lens => 'Resolv.lns',
+  }
+
+  if $priority == 0 {
+    fail("Priority must nit be 0, start with 1 please.")
   }
 
   case $ensure {
-    present: {
-
+    present : {
       augeas { "Adding nameserver ${name} to /etc/resolv.conf":
         changes => "set nameserver[${priority}] ${name}",
         onlyif  => "match nameserver[.='${name}'] size == 0",
       }
     }
-    absent: {
-      augeas { "Removing nameserver ${name} from /etc/resolv.conf":
-        changes => "rm nameserver[.='${name}']"
+    absent  : {
+      augeas { "Removing nameserver ${name} from /etc/resolv.conf": changes => "rm nameserver[.='${name}']"
       }
     }
-    default: {
+    default : {
       fail("Invalid ensure value passed to Resolvconf::Nameserver[${name}]")
     }
   }

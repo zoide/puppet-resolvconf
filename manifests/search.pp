@@ -11,37 +11,40 @@
 #
 #   resolvconf::search {
 #     'foo.test.com':
-#       priority => 0;
-#     'test.com':
 #       priority => 1;
+#     'test.com':
+#       priority => 2;
 #   }
-define resolvconf::search($priority = '999', $ensure = 'present') {
-  include resolvconf::lenses
-
+define resolvconf::search ($priority = '999', $ensure = 'present') {
   Augeas {
     incl => '/etc/resolv.conf',
-    lens => 'Resolvconf.lns',
-    require => Class['resolvconf::lenses'],
+    lens => 'Resolv.lns',
   }
 
-  $match_priority = $priority ? {
-    '999'   => '*',
-    default => $priority,
+  if $priority == 0 {
+    fail("Priority must nit be 0, start with 1 please.")
   }
+  $match_priority = $priority ? {
+    '999'   => '',
+    default => "[${priority}]",
+  }
+
+  notice("set search/domain${match_priority} ${name}")
 
   case $ensure {
-    'present': {
+    'present' : {
       augeas { "Adding search domain '${name}' to /etc/resolv.conf":
-        changes => "set search/${priority} ${name}",
-        onlyif  => "match search/${match_priority}[.='${name}'] size == 0",
+        changes => "set search/domain${match_priority} ${name}",
+        onlyif  => "match search/*${match_priority}[.='${name}'] size == 0",
       }
     }
-    'absent': {
+    'absent'  : {
       augeas { "Removing search domain '${name}' from /etc/resolv.conf":
         changes => "rm search/*[.='${name}']",
+        onlyif  => "match search/domain[.='${name}'] include '${name}'",
       }
     }
-    default: {
+    default   : {
       fail("Invalid ensure value passed to Resolvconf::Search[${name}]")
     }
   }

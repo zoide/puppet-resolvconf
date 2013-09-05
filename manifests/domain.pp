@@ -13,27 +13,25 @@
 #   resolvconf::domain { 'test.bar.com':
 #     ensure => absent,
 #   }
-define resolvconf::domain($ensure = 'present') {
+define resolvconf::domain ($ensure = 'present') {
   include resolvconf::lenses
 
   Augeas {
-    incl => '/etc/resolv.conf',
-    lens => 'Resolvconf.lns',
+    incl    => '/etc/resolv.conf',
+    lens    => 'Resolvconf.lns',
     require => Class['resolvconf::lenses'],
   }
 
   case $ensure {
-    'present': {
-      augeas { "Setting domain in /etc/resolv.conf to ${name}":
-        changes => "set domain ${name}",
+    'present' : {
+      augeas { "Setting domain in /etc/resolv.conf to ${name}": changes => "set domain ${name}",
       }
     }
-    'absent': {
-      augeas { 'Removing domain from /etc/resolv.conf':
-        changes => 'rm domain',
+    'absent'  : {
+      augeas { 'Removing domain from /etc/resolv.conf': changes => 'rm domain',
       }
     }
-    default: {
+    default   : {
       fail("Invalid ensure value passed to Resolvconf::Domain[${name}]")
     }
   }
