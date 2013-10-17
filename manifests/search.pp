@@ -29,7 +29,7 @@ define resolvconf::search ($priority = '999', $ensure = 'present') {
     default => "[${priority}]",
   }
 
-  notice("set search/domain${match_priority} ${name}")
+  debug("set search/domain${match_priority} ${name}")
 
   case $ensure {
     'present' : {
